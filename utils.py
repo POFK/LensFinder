@@ -2,7 +2,6 @@
 # coding=utf-8
 import torch
 import numpy as np
-from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import Dataset, DataLoader
 
 
@@ -33,7 +32,7 @@ def fit(epochs, model, loss_func, opt, train_dl, valid_dl):
             xb, yb = data_step['image'].to(device), data_step['label'].to(
                 device)
             train_loss, _ = loss_batch(model, loss_func, xb, yb, opt)
-        writer.add_scalar('loss/train', train_loss, global_step=epoch)
+       #writer.add_scalar('loss/train', train_loss, global_step=epoch)
         model.eval()
         with torch.no_grad():
             losses, nums = zip(*[
@@ -42,5 +41,5 @@ def fit(epochs, model, loss_func, opt, train_dl, valid_dl):
                 for data_step in valid_dl
             ])
         val_loss = np.sum(np.multiply(losses, nums)) / np.sum(nums)
-        writer.add_scalar('loss/valid', val_loss, global_step=epoch)
+       #writer.add_scalar('loss/valid', val_loss, global_step=epoch)
         print(epoch, val_loss)

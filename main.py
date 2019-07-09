@@ -7,13 +7,17 @@ import torch
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
-from torch.utils.tensorboard import SummaryWriter
 import torch.nn.functional as F
 
 from ResNet import resnet14 as resnet
 from utils import get_data, loss_batch
 from checkpoint import save, load
 from flags import args
+
+__all__ = [
+    'get_model', 'args', 'save', 'load', 'resnet', 'get_data', 'loss_batch', 'check_dir'
+]
+
 #============================================================
 #DataDir = "/data/storage1/LensFinder/data_otherlens"
 DataDir = "/data/storage1/LensFinder/data_old"
@@ -29,8 +33,6 @@ def check_dir(path):
         os.makedirs(path)
 
 
-check_dir(log_dir)
-check_dir(model_dir)
 #============================================================
 device = torch.device("cuda:0" if args.use_cuda else "cpu")
 num_class = 2
@@ -159,6 +161,7 @@ def _train(epochs,
 
 
 def train(model_path=None):
+    from torch.utils.tensorboard import SummaryWriter
     writer = SummaryWriter(log_dir=log_dir)
     preprocess = transforms.Compose([RandomCrop(84), ToTensor()])
     train_ds = MyDataset(path=path_tr, transform=preprocess)
@@ -194,6 +197,8 @@ def eval_test(name, epoch):
 
 
 if __name__ == "__main__":
+    check_dir(log_dir)
+    check_dir(model_dir)
     if args.mode == 'eval':
         probability = eval_test(args.name, args.epoch)
         label = np.load(os.path.join(DataDir, "test.npy"))['label']

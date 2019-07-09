@@ -17,17 +17,17 @@ def save(path, epoch, model, loss, device, opt=None):
 
 
 def load(path, model, opt=None):
-    checkpoint = torch.load(path)
+    device = torch.device("cuda:0" if args.use_cuda else "cpu")
+    map_location = "cpu" if device.type == "cpu" else "cuda:0"
+    try:
+        checkpoint = torch.load(path)
+    except RuntimeError:
+        checkpoint = torch.load(path, map_location=map_location)
+        device_cpt = checkpoint['device']
+        print("{} --> {}...".format(device_cpt, map_location))
     epoch = checkpoint['epoch']
     loss = checkpoint['loss']
     device_cpt = checkpoint['device']
-    device = torch.device("cuda:0" if args.use_cuda else "cpu")
-    if device.type == device_cpt.type:
-        map_location = None
-    else:
-        map_location = "cpu" if device.type == "cpu" else "cuda:0"
-        print("{} --> {}...".format(device_cpt, map_location))
-    checkpoint = torch.load(path, map_location=map_location)
     if opt is not None:
         opt.load_state_dict(checkpoint['optimizer_state_dict'])
     model.load_state_dict(checkpoint['model_state_dict'])
