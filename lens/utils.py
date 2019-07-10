@@ -1,19 +1,31 @@
 #!/usr/bin/env python
 # coding=utf-8
-import torch
+import os
 import numpy as np
+import torch
+from torch import nn
 from torch.utils.data import Dataset, DataLoader
 
 
-def get_data(train_ds, valid_ds, bs, bs_test, num_workers=0):
-    return (
-        DataLoader(train_ds,
-                   batch_size=bs,
-                   shuffle=True,
-                   num_workers=num_workers,
-                   drop_last=True),
-        DataLoader(valid_ds, batch_size=bs_test),
-    )
+def get_device(use_cuda=True):
+    use_cuda = use_cuda and torch.cuda.is_available()
+    device = torch.device("cuda:0" if use_cuda else "cpu")
+    return device
+
+
+def get_model_device(model, device):
+    if device.type == 'cuda':
+        if torch.cuda.device_count() > 1:
+            print("Let's use", torch.cuda.device_count(), "GPUs!")
+            model = nn.DataParallel(model)
+        model.to(device)
+    return model
+
+
+def check_dir(path):
+    if not os.path.isdir(path):
+        print('mkdir: ', path)
+        os.makedirs(path)
 
 
 def loss_batch(model, loss_func, xb, yb, opt=None):
@@ -25,6 +37,7 @@ def loss_batch(model, loss_func, xb, yb, opt=None):
     return loss.item(), len(xb)
 
 
+"""
 def fit(epochs, model, loss_func, opt, train_dl, valid_dl):
     for epoch in range(epochs):
         model.train()
@@ -43,3 +56,4 @@ def fit(epochs, model, loss_func, opt, train_dl, valid_dl):
         val_loss = np.sum(np.multiply(losses, nums)) / np.sum(nums)
        #writer.add_scalar('loss/valid', val_loss, global_step=epoch)
         print(epoch, val_loss)
+"""

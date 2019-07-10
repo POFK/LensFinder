@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import os
 import numpy as np
 import torch
 
@@ -9,8 +8,9 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 import torch.nn.functional as F
 
+from input_pipeline import *
 from ResNet import resnet14 as resnet
-from utils import get_data, loss_batch
+from utils import loss_batch, check_dir, get_model_device, get_device
 from checkpoint import save, load
 from flags import args
 
@@ -18,7 +18,7 @@ __all__ = [
     'get_model', 'args', 'save', 'load', 'resnet', 'get_data', 'loss_batch', 'check_dir'
 ]
 
-#============================================================
+# ============================================================
 #DataDir = "/data/storage1/LensFinder/data_otherlens"
 DataDir = "/data/storage1/LensFinder/data_old"
 log_dir = os.path.join(args.base_dir, args.log_dir + '/' + args.name)
@@ -27,95 +27,16 @@ path_tr = os.path.join(DataDir, "training.npy")
 path_va = os.path.join(DataDir, "valid.npy")
 
 
-def check_dir(path):
-    if not os.path.isdir(path):
-        print('mkdir: ', path)
-        os.makedirs(path)
-
-
-#============================================================
+# ============================================================
 device = torch.device("cuda:0" if args.use_cuda else "cpu")
 num_class = 2
 
 
-### data loader
-class MyDataset(Dataset):
-    """My dataset."""
-
-    def __init__(self, path, transform=None):
-        """
-        Args:
-            transform (callable, optional): Optional transform to be applied
-                on a sample.
-        """
-        self.path = path
-        data = np.load(path)
-        self.data = {
-            'image': data['image'],
-            'label': data['label'].reshape(-1, 1)
-        }
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.data['label'])
-
-    def __getitem__(self, idx):
-        sample = {
-            'image': self.data['image'][idx],
-            'label': self.data['label'][idx]
-        }
-        if self.transform:
-            sample = self.transform(sample)
-        return sample
-
-
-class ToTensor(object):
-    def __call__(self, sample):
-        image, label = sample['image'], sample['label']
-        image = image.transpose((2, 0, 1))
-        imate = np.clip(image, -100, 100)
-        image = torch.from_numpy(image)
-        label = torch.from_numpy(label)
-        label = label.type(torch.LongTensor)
-        label = F.one_hot(label, num_classes=num_class).view(num_class)
-        return {'image': image, 'label': label}
-
-
-class RandomCrop(object):
-    """Crop randomly the image in a sample.
-    Args:
-        output_size (tuple or int): Desired output size. If int, square crop
-            is made.
-    """
-
-    def __init__(self, output_size):
-        assert isinstance(output_size, (int, tuple))
-        if isinstance(output_size, int):
-            self.output_size = (output_size, output_size)
-        else:
-            assert len(output_size) == 2
-            self.output_size = output_size
-
-    def __call__(self, sample):
-        image, label = sample['image'], sample['label']
-        h, w = image.shape[:2]
-        new_h, new_w = self.output_size
-        top = np.random.randint(0, h - new_h)
-        left = np.random.randint(0, w - new_w)
-        image = image[top:top + new_h, left:left + new_w]
-        return {'image': image, 'label': label}
-
-
-#============================================================
 def get_model():
     model = resnet(input_channels=3, num_classes=2)
     #   print(model)
-    #print(model.state_dict().keys())
-    if device.type == 'cuda':
-        if torch.cuda.device_count() > 1:
-            print("Let's use", torch.cuda.device_count(), "GPUs!")
-            model = nn.DataParallel(model)
-        model.to(device)
+    # print(model.state_dict().keys())
+    model = get_model_device(model, device)
     return model, torch.optim.Adam(model.parameters(),
                                    lr=args.lr,
                                    betas=(0.9, 0.999),
