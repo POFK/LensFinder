@@ -1,0 +1,9 @@
+language: python
+python:
+    - "3.7"
+install:
+    - conda env create -f env.yml
+    - conda activate torch
+
+script:
+    - python tests/run_test.py
