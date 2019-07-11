@@ -4,9 +4,9 @@ import os
 import numpy as np
 import torch
 import h5py
-import glob
 import tqdm
 
+import glob
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
@@ -15,7 +15,7 @@ import torch.nn.functional as F
 from main import *
 
 name = 'area1_hdf5_2'
-model_path = '/data/dell5/userdir/maotx/Lens/model/lens_001_20.cpt'
+model_path = '/data/dell5/userdir/maotx/Lens/model/lens_047_80.cpt'
 BaseDir = '/data/inspur_disk03/userdir/wangcx/BASS_stack/area1/'+name
 OutDir = '/data/dell5/userdir/maotx/Lens/result/'+name
 check_dir(OutDir)
@@ -66,7 +66,7 @@ class ToTensor(object):
         return image
 
 
-class RandomCrop(object):
+class Crop(object):
     """Crop randomly the image in a sample.
     Args:
         output_size (tuple or int): Desired output size. If int, square crop
@@ -84,14 +84,14 @@ class RandomCrop(object):
     def __call__(self, image):
         h, w = image.shape[:2]
         new_h, new_w = self.output_size
-        top = np.random.randint(0, h - new_h)
-        left = np.random.randint(0, w - new_w)
+        top = (h - new_h)//2
+        left = (w - new_w)//2
         image = image[top:top + new_h, left:left + new_w]
         return image
 
 
 def eval(BaseDir, fps=[], OutDir=OutDir, model_path=model_path):
-    preprocess = transforms.Compose([RandomCrop(84), ToTensor()])
+    preprocess = transforms.Compose([Crop(84), ToTensor()])
     model, _ = get_model()
     model = torch.nn.DataParallel(model)
     checkpoint = torch.load(model_path, map_location='cpu')

@@ -62,7 +62,7 @@ class TestDevice(unittest.TestCase):
         device = get_device()
         model = mock.MagicMock()
         model_dev = get_model_device(model, device)
-        print(model_dev)
+        self.assertListEqual(model_dev.device_ids,[0,1,2,3])
 
     @mock.patch('torch.cuda.device_count')
     @mock.patch('torch.cuda.is_available')

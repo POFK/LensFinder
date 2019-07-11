@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import numpy as np
+import os
 import torch
 
 from torch import nn
@@ -20,16 +21,15 @@ __all__ = [
 
 # ============================================================
 #DataDir = "/data/storage1/LensFinder/data_otherlens"
-DataDir = "/data/storage1/LensFinder/data_old"
+DataDir = "/data/storage1/LensFinder/0710/data"
 log_dir = os.path.join(args.base_dir, args.log_dir + '/' + args.name)
 model_dir = os.path.join(args.base_dir, args.model_dir + '/' + args.name)
 path_tr = os.path.join(DataDir, "training.npy")
 path_va = os.path.join(DataDir, "valid.npy")
-
-
 # ============================================================
-device = torch.device("cuda:0" if args.use_cuda else "cpu")
-num_class = 2
+device = get_device(args.use_cuda)
+num_class = args.num_class
+random_crop = 84
 
 
 def get_model():
@@ -58,7 +58,7 @@ def _train(epochs,
            train_dl,
            valid_dl,
            writer,
-           epoch_old=0):
+           epoch_old=1):
     for epoch in range(epoch_old, epoch_old + epochs):
         model.train()
         for data_step in train_dl:
@@ -84,7 +84,7 @@ def _train(epochs,
 def train(model_path=None):
     from torch.utils.tensorboard import SummaryWriter
     writer = SummaryWriter(log_dir=log_dir)
-    preprocess = transforms.Compose([RandomCrop(84), ToTensor()])
+    preprocess = transforms.Compose([RandomCrop(random_crop), ToTensor()])
     train_ds = MyDataset(path=path_tr, transform=preprocess)
     valid_ds = MyDataset(path=path_va, transform=preprocess)
     train_dl, valid_dl = get_data(train_ds,
@@ -92,18 +92,47 @@ def train(model_path=None):
                                   bs=args.batch_size,
                                   bs_test=args.test_batch_size)
     model, opt = get_model()
-    if load is not None:
-        model, epoch = load(model_path, model, opt=opt)
-    _train(args.epochs, model, loss_func, opt, train_dl, valid_dl, writer)
+    epoch_big = 1
+    if model_path is not None:
+        model, epoch_big = load(model_path, model, opt=opt)
+    _train(args.epochs, model, loss_func, opt, train_dl,
+           valid_dl, writer, epoch_old=epoch_big)
     writer.close()
 
+class Crop_test(object):
+    """Crop randomly the image in a sample.
+    Args:
+        output_size (tuple or int): Desired output size. If int, square crop
+            is made.
+    """
+
+    def __init__(self, output_size):
+        assert isinstance(output_size, (int, tuple))
+        if isinstance(output_size, int):
+            self.output_size = (output_size, output_size)
+        else:
+            assert len(output_size) == 2
+            self.output_size = output_size
+
+    def __call__(self, sample):
+        image, label = sample['image'], sample['label']
+        h, w = image.shape[:2]
+        new_h, new_w = self.output_size
+        top = (h - new_h)//2
+        left = (w - new_w)//2
+        image = image[top:top + new_h, left:left + new_w]
+        return {'image': image, 'label': label}
 
 def eval_test(name, epoch):
     path_te = os.path.join(DataDir, "test.npy")
-    preprocess = transforms.Compose([RandomCrop(84), ToTensor()])
+    preprocess = transforms.Compose([Crop_test(random_crop), ToTensor()])
     test_ds = MyDataset(path=path_te, transform=preprocess)
     test_dl = DataLoader(test_ds, batch_size=args.batch_size)
     model, _ = get_model()
+    # modify the save function later to fix this bug
+    if device.type == 'cpu':
+        model = torch.nn.DataParallel(model)
+    # modify the save function later to fix this bug
     model_path = os.path.join(model_dir, "{}_{}.cpt".format(name, epoch))
     model, epoch = load(model_path, model)
     print('loading {}'.format(model_path), epoch)
@@ -123,7 +152,8 @@ if __name__ == "__main__":
     if args.mode == 'eval':
         probability = eval_test(args.name, args.epoch)
         label = np.load(os.path.join(DataDir, "test.npy"))['label']
-        np.save('eval_test.npy', np.c_[probability, label])
+        fp_save = os.path.join(model_dir, 'eval_test_{}.npy'.format(args.epoch))
+        np.save(fp_save, np.c_[probability, label])
     elif args.mode == 'train':
         if args.epoch == 0:
             train()
