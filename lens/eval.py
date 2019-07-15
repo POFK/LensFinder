@@ -8,6 +8,8 @@ import tqdm
 
 import glob
 from torch import nn
+#import torch.multiprocessing as mp
+#mp.set_start_method('spawn')
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 import torch.nn.functional as F
@@ -15,15 +17,15 @@ import torch.nn.functional as F
 from main import *
 
 name = 'area1_hdf5_2'
-model_path = '/data/dell5/userdir/maotx/Lens/model/lens_048_45.cpt'
+model_path = '/data/dell5/userdir/maotx/Lens/model/lens_049_40.cpt'
 BaseDir = '/data/inspur_disk03/userdir/wangcx/BASS_stack/area1/'+name
-OutDir = '/data/dell5/userdir/maotx/Lens/result/0712/'+name
+OutDir = '/data/dell5/userdir/maotx/Lens/result/0715/'+name
 check_dir(OutDir)
 fps = glob.glob(BaseDir + '/*.hdf5')
 fps = [i.replace(BaseDir + '/', '') for i in fps]
 
 
-class MyDataset(Dataset):
+class EvalDataset(Dataset):
     """My dataset."""
 
     def __init__(self, root_dir, path, transform=None):
