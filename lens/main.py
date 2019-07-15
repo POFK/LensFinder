@@ -21,7 +21,7 @@ __all__ = [
 
 # ============================================================
 #DataDir = "/data/storage1/LensFinder/data_otherlens"
-DataDir = "/data/storage1/LensFinder/0710/data"
+DataDir = "/data/storage1/LensFinder/0712/data"
 log_dir = os.path.join(args.base_dir, args.log_dir + '/' + args.name)
 model_dir = os.path.join(args.base_dir, args.model_dir + '/' + args.name)
 path_tr = os.path.join(DataDir, "training.npy")
