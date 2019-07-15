@@ -15,9 +15,9 @@ import torch.nn.functional as F
 from main import *
 
 name = 'area1_hdf5_2'
-model_path = '/data/dell5/userdir/maotx/Lens/model/lens_047_80.cpt'
+model_path = '/data/dell5/userdir/maotx/Lens/model/lens_048_45.cpt'
 BaseDir = '/data/inspur_disk03/userdir/wangcx/BASS_stack/area1/'+name
-OutDir = '/data/dell5/userdir/maotx/Lens/result/'+name
+OutDir = '/data/dell5/userdir/maotx/Lens/result/0712/'+name
 check_dir(OutDir)
 fps = glob.glob(BaseDir + '/*.hdf5')
 fps = [i.replace(BaseDir + '/', '') for i in fps]
@@ -61,7 +61,7 @@ class MyDataset(Dataset):
 class ToTensor(object):
     def __call__(self, image):
         image = image.transpose((2, 0, 1))
-        imate = np.clip(image, -100, 100)
+        image = np.clip(image, -100, 100)
         image = torch.from_numpy(image)
         return image
 
