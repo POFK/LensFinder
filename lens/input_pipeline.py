@@ -61,7 +61,7 @@ class ToTensor(object):
         num_class = self.num_class
         image, label = sample['image'], sample['label']
         image = image.transpose((2, 0, 1))
-        imate = np.clip(image, -100, 100)
+        image = np.clip(image, -100, 100)
         image = torch.from_numpy(image)
         label = torch.from_numpy(label)
         label = label.type(torch.LongTensor)
