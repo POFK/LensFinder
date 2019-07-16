@@ -7,28 +7,20 @@ import h5py
 import tqdm
 
 import glob
-from torch import nn
-<<<<<<< HEAD
-#import torch.multiprocessing as mp
-#mp.set_start_method('spawn')
-from torch.utils.data import Dataset, DataLoader
-=======
 from torch.utils.data import Dataset, DataLoader, ConcatDataset
->>>>>>> FETCH_HEAD
 from torchvision import transforms
-import torch.nn.functional as F
 
 from main import *
 
-name = 'area1_hdf5_2'
+#name = 'area1_hdf5_2'
+name = 'area2_hdf5'
 model_path = '/data/dell5/userdir/maotx/Lens/model/lens_049_40.cpt'
-BaseDir = '/data/inspur_disk03/userdir/wangcx/BASS_stack/area1/'+name
+BaseDir = '/data/inspur_disk03/userdir/wangcx/BASS_stack/area2/'+name
 OutDir = '/data/dell5/userdir/maotx/Lens/result/{}_{}'.format(
     name, model_path.split('/')[-1][:-4])
 check_dir(OutDir)
 fps = glob.glob(BaseDir + '/*.hdf5')
 fps = [i.replace(BaseDir + '/', '') for i in fps]
-
 
 class HdfDataset(Dataset):
     """My dataset."""
@@ -42,12 +34,11 @@ class HdfDataset(Dataset):
         self.root = root
         self.path = path
         self.transform = transform
-        self.fp = h5py.File(os.path.join(root, path), 'r')
-        self.keys = list(self.fp.keys())
-        self.fp.close()
+        with h5py.File(os.path.join(root, path), 'r') as fp:
+            self.keys = list(fp.keys())
 
     def _init_fn(self, num):
-        self.fp = h5py.File(os.path.join(root, path), 'r')
+        self.fp = h5py.File(os.path.join(self.root, self.path), 'r')
 
     def __len__(self):
         return len(self.keys)
@@ -112,28 +103,28 @@ def eval(BaseDir, fps=[], OutDir=OutDir, model_path=model_path):
     preprocess = transforms.Compose([Crop(84), ToTensor()])
     model, _ = get_model()
     model = torch.nn.DataParallel(model)
-    checkpoint = torch.load(model_path, map_location='cpu')
+    _ = torch.load(model_path, map_location='cpu')
     model, epoch = load(model_path, model)
     print('loading {}'.format(model_path), epoch)
     model.eval()
+    for fp in tqdm.tqdm(fps):
+        BASS_ds = HdfDataset(root=BaseDir, path=fp, transform=preprocess)
+        BASS_dl = DataLoader(BASS_ds, batch_size=args.batch_size,
+                             num_workers=4, worker_init_fn=BASS_ds._init_fn)
+        PROB = []
+        with torch.no_grad():
+            for data_step in BASS_dl:
+                key = data_step['key']
+                prob = torch.sigmoid(model(data_step['image'])).numpy()
+                PROB.append(zip(key, prob))
 
-    BASS_ds = [HdfDataset(root=BaseDir, path=fp, transform=preprocess)
-               for fp in fps]
-    BASS_ds = HdfConcatDataset(BASS_ds)
-    BASS_dl = DataLoader(BASS_ds, batch_size=args.batch_size,
-                         num_workers=1, worker_init_fn=BASS_ds._init_fn)
-    PROB = []
-    with torch.no_grad():
-        for data_step in BASS_dl:
-            path = data_step['path']
-            key = data_step['key']
-            prob = torch.sigmoid(model(data_step['image'])).numpy()
-            PROB.append(zip(path, key, prob))
-
-    with h5py.File(os.path.join(OutDir, '.hdf5'), 'w') as FP:
-        for path, key, prob in PROB:
-            hdf_key = '{}/{}'.format(path, key)
-            FP.create_dataset(hdf_key, data=PROB)
+        wpath = os.path.join(OutDir, fp.replace('.hdf5','.txt'))
+        with open(wpath, 'w') as FP:
+            for result in PROB:
+                for key, P_value in result:
+                    temp = "{}\t{}\t{}\n".format(key, P_value[0], P_value[1])
+                    FP.writelines(temp)
 
 if __name__ == "__main__":
     eval(BaseDir, fps=fps, OutDir=OutDir, model_path=model_path)
+
