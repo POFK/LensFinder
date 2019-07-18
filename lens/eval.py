@@ -13,8 +13,9 @@ from torchvision import transforms
 from main import *
 
 #name = 'area1_hdf5_2'
-name = 'area2_hdf5'
-model_path = '/data/dell5/userdir/maotx/Lens/model/lens_049_40.cpt'
+#name = 'area2_hdf5'
+name = 'DEV_COMP_hdf5'
+model_path = '/data/dell5/userdir/maotx/Lens/model/lens_049_45.cpt'
 BaseDir = '/data/inspur_disk03/userdir/wangcx/BASS_stack/area2/'+name
 OutDir = '/data/dell5/userdir/maotx/Lens/result/{}_{}'.format(
     name, model_path.split('/')[-1][:-4])
