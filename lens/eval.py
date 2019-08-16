@@ -91,7 +91,8 @@ class Crop(object):
 
 
 def eval(BaseDir, fps=[], OutDir=OutDir, model_path=model_path):
-    preprocess = transforms.Compose([Crop(84), ToTensor()])
+#   preprocess = transforms.Compose([Crop(84), ToTensor()])
+    preprocess = transforms.Compose([ToTensor()])
     model, _ = get_model()
     model = torch.nn.DataParallel(model)
     checkpoint = torch.load(model_path, map_location='cpu')

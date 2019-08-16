@@ -84,7 +84,9 @@ def _train(epochs,
 def train(model_path=None):
     from torch.utils.tensorboard import SummaryWriter
     writer = SummaryWriter(log_dir=log_dir)
-    preprocess = transforms.Compose([RandomCrop(random_crop), ToTensor()])
+#   preprocess = transforms.Compose([RandomCrop(random_crop), ToTensor()])
+    # no random crop...
+    preprocess = transforms.Compose([ToTensor()])
     train_ds = MyDataset(path=path_tr, transform=preprocess)
     valid_ds = MyDataset(path=path_va, transform=preprocess)
     train_dl, valid_dl = get_data(train_ds,
@@ -125,7 +127,8 @@ class Crop_test(object):
 
 def eval_test(name, epoch):
     path_te = os.path.join(DataDir, "test.npy")
-    preprocess = transforms.Compose([Crop_test(random_crop), ToTensor()])
+#   preprocess = transforms.Compose([Crop_test(random_crop), ToTensor()])
+    preprocess = transforms.Compose([ToTensor()])
     test_ds = MyDataset(path=path_te, transform=preprocess)
     test_dl = DataLoader(test_ds, batch_size=args.batch_size)
     model, _ = get_model()
