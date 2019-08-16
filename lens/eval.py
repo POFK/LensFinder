@@ -7,36 +7,38 @@ import h5py
 import tqdm
 
 import glob
-from torch import nn
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, ConcatDataset
 from torchvision import transforms
-import torch.nn.functional as F
 
 from main import *
 
-name = 'area1_hdf5_2'
-model_path = '/data/dell5/userdir/maotx/Lens/model/lens_048_45.cpt'
-BaseDir = '/data/inspur_disk03/userdir/wangcx/BASS_stack/area1/'+name
-OutDir = '/data/dell5/userdir/maotx/Lens/result/0712/'+name
+#name = 'area1_hdf5_2'
+name = 'area2_hdf5'
+model_path = '/data/dell5/userdir/maotx/Lens/model/lens_049_40.cpt'
+BaseDir = '/data/inspur_disk03/userdir/wangcx/BASS_stack/area2/'+name
+OutDir = '/data/dell5/userdir/maotx/Lens/result/{}_{}'.format(
+    name, model_path.split('/')[-1][:-4])
 check_dir(OutDir)
 fps = glob.glob(BaseDir + '/*.hdf5')
 fps = [i.replace(BaseDir + '/', '') for i in fps]
 
-
-class MyDataset(Dataset):
+class HdfDataset(Dataset):
     """My dataset."""
 
-    def __init__(self, root_dir, path, transform=None):
+    def __init__(self, root, path, transform=None):
         """
         Args:
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        self.root = root_dir
+        self.root = root
         self.path = path
         self.transform = transform
-        self.fp = h5py.File(os.path.join(root_dir, path), 'r')
-        self.keys = list(self.fp.keys())
+        with h5py.File(os.path.join(root, path), 'r') as fp:
+            self.keys = list(fp.keys())
+
+    def _init_fn(self, num):
+        self.fp = h5py.File(os.path.join(self.root, self.path), 'r')
 
     def __len__(self):
         return len(self.keys)
@@ -50,12 +52,19 @@ class MyDataset(Dataset):
         key = self.keys[idx]
         if self.transform:
             image = self.transform(image)
-        return {'image': image, 'key': key}
+        return {'image': image, 'key': key, 'path': self.path}
 
     def _center(self, x):
         mean = x.mean()
         std = x.std()
         return (x - mean) / std
+
+
+class HdfConcatDataset(ConcatDataset):
+
+    def _init_fn(self, num):
+        for ds in self.datasets:
+            ds._init_fn(num)
 
 
 class ToTensor(object):
@@ -95,26 +104,28 @@ def eval(BaseDir, fps=[], OutDir=OutDir, model_path=model_path):
     preprocess = transforms.Compose([ToTensor()])
     model, _ = get_model()
     model = torch.nn.DataParallel(model)
-    checkpoint = torch.load(model_path, map_location='cpu')
+    _ = torch.load(model_path, map_location='cpu')
     model, epoch = load(model_path, model)
     print('loading {}'.format(model_path), epoch)
     model.eval()
-    for fp_num in tqdm.tqdm(range(len(fps))):
-        fp = fps[fp_num]
-        BASS_ds = MyDataset(root_dir=BaseDir, path=fp, transform=preprocess)
-        BASS_dl = DataLoader(BASS_ds, batch_size=args.batch_size, num_workers=1)
+    for fp in tqdm.tqdm(fps):
+        BASS_ds = HdfDataset(root=BaseDir, path=fp, transform=preprocess)
+        BASS_dl = DataLoader(BASS_ds, batch_size=args.batch_size,
+                             num_workers=4, worker_init_fn=BASS_ds._init_fn)
         PROB = []
         with torch.no_grad():
             for data_step in BASS_dl:
                 key = data_step['key']
                 prob = torch.sigmoid(model(data_step['image'])).numpy()
-                PROB.append(zip(key,prob))
-            with open(os.path.join(OutDir, fp[:-5]+'.txt'),'w') as FP:
-                for Item in PROB:
-                    for P_key, P_value in Item:
-                        temp = "{}\t{}\t{}\n".format(P_key, P_value[0], P_value[1])
-                        FP.writelines(temp)
+                PROB.append(zip(key, prob))
 
+        wpath = os.path.join(OutDir, fp.replace('.hdf5','.txt'))
+        with open(wpath, 'w') as FP:
+            for result in PROB:
+                for key, P_value in result:
+                    temp = "{}\t{}\t{}\n".format(key, P_value[0], P_value[1])
+                    FP.writelines(temp)
 
 if __name__ == "__main__":
     eval(BaseDir, fps=fps, OutDir=OutDir, model_path=model_path)
+
