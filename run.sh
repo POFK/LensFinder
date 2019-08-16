@@ -46,8 +46,9 @@
 #python lens/main.py --lr 0.00001 --weight_decay 0.5 --name lens_049 --epochs 50 --test_batch_size 1024  --batch_size 256
 #python lens/main.py --lr 0.000001 --weight_decay 0.5 --name lens_049 --epochs 50 --test_batch_size 1024  --batch_size 256 --epoch 50
 #--------------------- run @ 0816 -----------------------------------------------
-python lens/main.py --lr 0.00001 --weight_decay 0.5 --name lens_050 --epochs 50 --test_batch_size 1024  --batch_size 256
-python lens/main.py --lr 0.000001 --weight_decay 0.5 --name lens_050 --epochs 50 --test_batch_size 1024  --batch_size 256 --epoch 50
+#python lens/main.py --lr 0.00001 --weight_decay 0.5 --name lens_050 --epochs 50 --test_batch_size 1024  --batch_size 256
+#python lens/main.py --lr 0.00001 --weight_decay 0.5 --name lens_053 --epochs 50 --test_batch_size 1024  --batch_size 256
+#python lens/main.py --lr 0.00001 --weight_decay 1.0 --name lens_054 --epochs 80 --test_batch_size 1024  --batch_size 256
 
 
 
@@ -73,3 +74,12 @@ python lens/main.py --lr 0.000001 --weight_decay 0.5 --name lens_050 --epochs 50
 #python lens/main.py  --name lens_049 --batch_size 256 --epoch 50 --mode eval
 #python lens/main.py  --name lens_049 --batch_size 256 --epoch 60 --mode eval
 #python lens/main.py  --name lens_049 --batch_size 256 --epoch 80 --mode eval
+#--------------------- run @ 0816 -----------------------------------------------
+#python lens/main.py  --name lens_053 --batch_size 256 --epoch 40 --mode eval
+#python lens/main.py  --name lens_054 --batch_size 256 --epoch 40 --mode eval
+python lens/main.py  --name lens_054 --batch_size 256 --epoch 41 --mode eval
+python lens/main.py  --name lens_054 --batch_size 256 --epoch 42 --mode eval
+python lens/main.py  --name lens_054 --batch_size 256 --epoch 43 --mode eval
+python lens/main.py  --name lens_054 --batch_size 256 --epoch 44 --mode eval
+python lens/main.py  --name lens_054 --batch_size 256 --epoch 45 --mode eval
+
