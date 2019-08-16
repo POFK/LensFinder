@@ -29,7 +29,7 @@ path_va = os.path.join(DataDir, "valid.npy")
 # ============================================================
 device = get_device(args.use_cuda)
 num_class = args.num_class
-random_crop = 84
+random_crop = 97
 
 
 def get_model():
