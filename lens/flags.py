@@ -5,6 +5,7 @@ import os
 import torch
 parser = argparse.ArgumentParser(description='PyTorch Example')
 parser.add_argument('--num_class', type=int, default=2, metavar='N')
+parser.add_argument('--crop_range', type=int, default=84, metavar='N')
 parser.add_argument('--batch_size', type=int, default=128, metavar='N',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test_batch_size', type=int, default=128 * 4, metavar='N',

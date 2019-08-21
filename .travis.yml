@@ -8,7 +8,7 @@ install:
     - conda update -q conda
     - conda info -a
     - conda env create -f env.yml
-    - conda activate torch
+    - source activate torch
 
 script:
     - python tests/run_test.py

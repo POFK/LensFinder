@@ -12,6 +12,8 @@ from torchvision import transforms
 
 from main import *
 
+random_crop = args.crop_range
+
 #name = 'area1_hdf5_2'
 name = 'area2_hdf5'
 model_path = '/data/dell5/userdir/maotx/Lens/model/lens_049_40.cpt'
