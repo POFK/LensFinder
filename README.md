@@ -1,4 +1,5 @@
 [![travis-ci](https://travis-ci.com/POFK/LensFinder.svg?branch=master)](https://travis-ci.com/POFK/LensFinder)
+[![codecov](https://codecov.io/gh/POFK/LensFinder/branch/master/graph/badge.svg)](https://codecov.io/gh/POFK/LensFinder)
 
 
 ### Install

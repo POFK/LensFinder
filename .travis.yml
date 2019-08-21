@@ -11,4 +11,9 @@ install:
     - source activate torch
 
 script:
-    - python tests/run_test.py
+    - pip install codecov
+    - coverage run tests/run_tests.py
+
+after_success:
+    - codecov
+
