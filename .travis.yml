@@ -1,18 +1,20 @@
 language: python
 
-install:
+before_install:
     - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH="$HOME/miniconda/bin:$PATH"
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
     - conda info -a
+
+install:
     - conda env create -f env.yml
     - source activate torch
+    - pip install codecov
 
 script:
-    - pip install codecov
-    - coverage run tests/run_tests.py
+    - coverage run tests/run_test.py
 
 after_success:
     - codecov
