@@ -1,0 +1,7 @@
+[run]
+omit = */tests/*.py, out/*
+branch = True
+data_file = doc/coverage
+[html]
+directory = doc/coverage_html
+
