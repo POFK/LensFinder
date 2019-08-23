@@ -21,7 +21,8 @@ __all__ = [
 
 # ============================================================
 #DataDir = "/data/storage1/LensFinder/data_otherlens"
-DataDir = "/data/storage1/LensFinder/0712/data"
+#DataDir = "/data/storage1/LensFinder/0712/data"
+DataDir = "/data/storage1/LensFinder/0822/data"
 log_dir = os.path.join(args.base_dir, args.log_dir + '/' + args.name)
 model_dir = os.path.join(args.base_dir, args.model_dir + '/' + args.name)
 path_tr = os.path.join(DataDir, "training.npy")
@@ -149,6 +150,7 @@ def eval_test(name, epoch):
 if __name__ == "__main__":
     check_dir(log_dir)
     check_dir(model_dir)
+    print(args)
     if args.mode == 'eval':
         probability = eval_test(args.name, args.epoch)
         label = np.load(os.path.join(DataDir, "test.npy"))['label']
@@ -160,4 +162,5 @@ if __name__ == "__main__":
         else:
             model_path = os.path.join(
                 model_dir, "{}_{}.cpt".format(args.name, args.epoch))
+            print("load model {}".format(model_path))
             train(model_path=model_path)
